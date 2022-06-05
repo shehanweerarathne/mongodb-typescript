@@ -4,7 +4,29 @@ import mongoose from "mongoose";
 
 
 export const Create = (req: Request, res: Response) => {
-  res.send(req.body);
+  const { author, name, category, price } = req.body.book;
+
+  const book = new Book({
+    _id: new mongoose.Types.ObjectId(),
+    author,
+    name,
+    category,
+    price
+  });
+
+  return book
+    .save()
+    .then((result) => {
+      return res.status(201).json({
+        book: result
+      });
+    })
+    .catch((error) => {
+      return res.status(500).json({
+        message: error.message,
+        error
+      });
+    });
 };
 
 export const createBook = (req: Request, res: Response) => {
