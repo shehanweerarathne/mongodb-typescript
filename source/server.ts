@@ -1,13 +1,13 @@
-import http from 'http';
-import bodyParser from 'body-parser';
+import cors from 'cors';
+import {routes} from "./routes";
 import express from 'express';
 import logging from './config/logging';
-import config from './config/config';
-import bookRoutes from './routes/book.routes'
+
 import mongoose from "mongoose";
+import xmlparser from "express-xml-bodyparser";
 
 const NAMESPACE = 'Server';
-const router = express();
+const app = express();
 
 
 /** Connect to Mongo */
@@ -20,7 +20,7 @@ mongoose.connect('mongodb://localhost:27017/BookShop')
   });
 
 /** Log the request */
-router.use((req, res, next) => {
+app.use((req, res, next) => {
     /** Log the req */
     logging.info(NAMESPACE, `METHOD: [${req.method}] - URL: [${req.url}] - IP: [${req.socket.remoteAddress}]`);
 
@@ -32,38 +32,13 @@ router.use((req, res, next) => {
     next();
 });
 
-router.use(bodyParser.urlencoded({ extended: true }));
-router.use(bodyParser.json());
+app.use(express.json());
+app.use(xmlparser({
+  explicitArray: false
+}));
+app.use(cors());
+routes(app);
 
-/** Rules of our API */
-router.use((req, res, next) => {
-    res.header('Access-Control-Allow-Origin', '*');
-    res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
-
-    if (req.method == 'OPTIONS') {
-        res.header('Access-Control-Allow-Methods', 'PUT, POST, PATCH, DELETE, GET');
-        return res.status(200).json({});
-    }
-
-    next();
+app.listen(8030, ()=>{
+  console.log('listening to port 8030')
 });
-
-
-/** Routes go here */
-router.use('/bookshop', bookRoutes);
-
-/** Error handling */
-router.use((req, res, next) => {
-    const error = new Error('Not found');
-
-    res.status(404).json({
-        message: error.message
-    });
-});
-
-/** Create Server */
-
-const httpServer = http.createServer(router);
-
-httpServer.listen(config.server.port, () => logging.info(NAMESPACE, `Server is running ${config.server.hostname}:${config.server.port}`));
-
