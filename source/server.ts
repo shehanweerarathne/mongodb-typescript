@@ -32,12 +32,23 @@ app.use((req, res, next) => {
     next();
 });
 
+
 app.use(express.json());
 app.use(xmlparser({
   explicitArray: false
 }));
 app.use(cors());
 routes(app);
+
+/** Errors */
+
+app.use((req, res, next) => {
+  const error = new Error('404 Not found');
+
+  res.status(404).json({
+    message: error.message
+  });
+});
 
 app.listen(8030, ()=>{
   console.log('listening to port 8030')
